@@ -1,0 +1,13 @@
+{
+    "mcpServers": {
+        "Finlistics-pb.ai": {
+            "type": "http",
+            "url": "https://api.dev.finlistics-vm.com/mcp",
+            "oauth": {
+                "clientId": "finlistics-ai.claude-code.development",
+                "scopes": "mcp:tools offline_access",
+                "callbackPort": 51789
+            }
+        }
+    }
+}

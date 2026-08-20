@@ -1,0 +1,16 @@
+{
+    "name": "finlistics",
+    "owner": {
+        "name": "FinListics Solutions",
+        "url": "https://finlistics.com"
+    },
+    "description": "FinListics ClientIQ plugins for Claude",
+    "plugins": [
+        {
+            "name": "finlistics-ai",
+            "source": "./finlistics-ai",
+            "category": "finance",
+            "tags": ["finance", "research", "b2b-sales"]
+        }
+    ]
+}
