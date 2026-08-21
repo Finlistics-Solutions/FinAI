@@ -8,9 +8,7 @@
     "plugins": [
         {
             "name": "finlistics-ai",
-            "source": "./finlistics-ai",
-            "category": "finance",
-            "tags": ["finance", "research", "b2b-sales"]
+            "source": "./finlistics-claude-plugins/finlistics-ai"
         }
     ]
 }

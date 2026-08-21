@@ -1,13 +1,18 @@
 {
     "name": "finlistics-ai",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Company and industry financial research powered by FinListics ClientIQ: company profiles, KPI diagnostics, peer comparisons, financial metric history, and executive reports.",
     "author": {
         "name": "FinListics Solutions",
         "url": "https://finlistics.com"
     },
     "homepage": "https://finlistics.com",
-    "keywords": ["finance", "corporate-finance", "kpi", "peer-comparison", "b2b-sales"],
-    "mcpServers": "./.mcp.json",
-    "agents": ["./agents/finlistics-analyst.md"]
+    "keywords": [
+        "finance",
+        "financial-research",
+        "sales",
+        "clientiq",
+        "finlistics"
+    ],
+    "mcpServers": "./.mcp.json"
 }
