@@ -34,7 +34,7 @@ with none of the response rules. Install both.
 4. In **Remote MCP server URL**, enter:
 
    ```
-   https://v2.finlistics-vm.com/mcp
+   https://api.v2.finlistics-vm.com/mcp
    ```
 
 5. Give it a name users will recognize, e.g. `finlistics-ai`.
