@@ -2,7 +2,7 @@
     "mcpServers": {
         "finlistics-ai": {
             "type": "http",
-            "url": "https://v2.finlistics-vm.com/mcp",
+            "url": "https://api.v2.finlistics-vm.com/mcp",
             "oauth": {
                 "clientId": "finlistics-ai.claude-code.prod",
                 "scopes": "mcp:tools offline_access",

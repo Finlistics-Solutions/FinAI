@@ -1,98 +1,47 @@
-# FinAI
+# FinListics AI for Claude
 
-FinListics ClientIQ2 for Claude — a RAG-based assistant that answers questions about company and
-industry financial performance.
+Company and industry financial research powered by FinListics ClientIQ2 — company profiles, KPI
+diagnostics, peer comparisons, financial metric history, and value narratives, sourced from
+ClientIQ2 rather than generated.
 
-The integration has **two independent pieces**, and both must be installed for it to work:
+This repository is a **Claude plugin marketplace**. The `finlistics-ai` plugin bundles two pieces
+that only work together:
 
 | Piece | What it is | What it does |
 |---|---|---|
-| **FinListics AI connector** | A remote MCP server at `https://v2.finlistics-vm.com/mcp` | Supplies the `clientiq2_*` tools that fetch real ClientIQ2 data |
-| **FinListics AI skill** | `finlistics-claude-plugins/finlistics-ai/skills/finlistics-ai/` | Teaches Claude the Economist Assistant role: which tool to call, how to format results, what never to invent |
+| **Connector** | A remote MCP server at `https://api.v2.finlistics-vm.com/mcp` | Supplies the `clientiq2_*` tools that fetch real ClientIQ2 data |
+| **Skill** | [`skills/finlistics-ai/SKILL.md`](finlistics-claude-plugins/finlistics-ai/skills/finlistics-ai/SKILL.md) | Teaches Claude the Economist Assistant role: which tool to call, how to format results, what never to invent |
 
-The skill without the connector produces no ClientIQ2 data — it will say the connector isn't enabled
-and refuse to substitute general knowledge. The connector without the skill returns raw tool output
-with none of the response rules. Install both.
-
----
-
-## Before you start
-
-- You must be an **Owner** on a **Team** or **Enterprise** plan. Members cannot add connectors or
-  organization skills.
-- Anthropic connects to the MCP server **from Anthropic's cloud**, not from the user's browser. The
-  server must be reachable over the public internet from Anthropic's IP ranges. A server behind a
-  VPN, a private network, or an IP allowlist will not connect.
+Installing the plugin installs both. The skill alone produces no ClientIQ2 data — it will say the
+connector isn't enabled and refuse to substitute general knowledge. The connector alone returns raw
+tool output with none of the response rules.
 
 ---
 
-## Part 1 — Add the FinListics AI connector
+## Install
 
-1. Go to **Organization settings → Connectors**.
-2. Click **Add**.
-3. Hover **Custom**, then select **Web**.
-4. In **Remote MCP server URL**, enter:
+Works in Claude on the web, the Chat tab in Claude Desktop, Claude Cowork, and Claude Code.
+Requires a paid Claude plan (Pro, Max, Team, or Enterprise) and a FinListics ClientIQ2 subscription.
 
-   ```
-   https://api.v2.finlistics-vm.com/mcp
-   ```
+### In Claude (web, Desktop, Cowork)
 
-5. Give it a name users will recognize, e.g. `finlistics-ai`.
-6. Open **Advanced settings** and fill in **OAuth Client ID** with 
+1. Open **Customize → Plugins** in the left sidebar.
+2. Click **Browse plugins**, then add a marketplace from a GitHub repository:
+   `Finlistics-Solutions/FinAI`
+3. Install **finlistics-ai**.
+4. Complete the ClientIQ2 sign-in when the consent screen appears.
 
-   ```
-   finlistics-ai.claude-code.prod
-   ```
-7. Click **Add**.
+### In Claude Code
 
-> **Do not reuse the client ID from `.mcp.json`.** That file configures *Claude Code*, which
-> authenticates from the user's own machine over a loopback redirect
-> (`clientId: finlistics-ai.claude-code.prod`, `callbackPort: 51789`). claude.ai redirects to
-> `https://claude.ai/api/mcp/auth_callback` instead, so the Claude Code client will be rejected at
-> the authorization step. claude.ai needs either DCR or its own registered client.
+```shell
+/plugin marketplace add Finlistics-Solutions/FinAI
+/plugin install finlistics-ai@finlistics
+```
 
-> **Editing a connector is not supported.** To change the URL or credentials, remove the connector
-> and add it again.
+Authenticate on first use, or run `claude mcp login finlistics-ai`.
 
----
-
-## Part 2 — Upload the FinListics AI skill
-
-### 2a. Enable skills for the organization
-
-Go to **Organization settings → Skills** and turn on both:
-
-- **Code execution and file creation**
-- **Skills**
-
-Skills depend on code execution. If code execution is off, skills will not be available.
-
-### 2b. Upload the skill as a .md file in claude.ai
-
-Find a `SKILL.md` file in `finlistics-claude-plugins/finlistics-ai/skills/finlistics-ai/` and upload it to claude.ai under **Organization settings → Skills → Upload skill**.
-
-### Skill frontmatter limits
-
-claude.ai enforces limits on the YAML frontmatter in `SKILL.md` that Claude Code does not:
-
-| Field | Limit | Current |
-|---|---|---|
-| `name` | 64 characters | 13 ✅ |
-| `description` | **200 characters** | 197 ✅ |
-
-The `description` was shortened specifically to fit the 200-character ceiling — a longer,
-more detailed description will cause the upload to be rejected. 
-
----
-
-## Part 3 — What each member does once
-
-Both pieces are pushed by the admin, but **each user must authenticate to ClientIQ2 individually**.
-OAuth is delegated per user; there is no shared organization token.
-
-1. The skill is already on — confirm under **Customize → Skills**.
-2. Connect the connector under personal **Settings → Connectors**, and complete the ClientIQ2 sign-in
-   when the consent screen appears.
+> **Each user authenticates individually.** OAuth is delegated per user; there is no shared
+> organization token. The connector returns only what that account is entitled to see.
 
 ---
 
@@ -105,38 +54,87 @@ Ask Claude:
 A correct response cites ClientIQ2 figures, keeps the 🔴 🟡 🟢 ⚪ performance indicators intact, and
 states the as-of period.
 
-If Claude answers from general knowledge, says the connector isn't enabled, or offers "public data as
-a fallback", the **connector** is not connected — the skill is loaded and doing exactly what it was
-told to do when `clientiq2_*` tools are missing. Recheck Part 1 and the user's OAuth sign-in.
-
----
-
-## Updating the skill later
-
-There is no in-place edit. To ship a new version:
-
-1. Edit `SKILL.md` in this repository and commit.
-2. In **Organization settings → Skills**, remove the old `finlistics-ai` skill and upload the new `.md` file.
+If Claude answers from general knowledge, says the connector isn't enabled, or offers "public data
+as a fallback", the **connector** is not connected — the skill is loaded and doing exactly what it
+was told to do when `clientiq2_*` tools are missing. Recheck the sign-in step.
 
 ---
 
 ## Repository layout
 
 ```
-.claude-plugin/marketplace.json                    Marketplace catalog — stub, not used yet
+.claude-plugin/marketplace.json                    Marketplace catalog
+.pre-commit-config.yaml                            Validation hooks
+.github/workflows/validate.yml                     Same hooks in CI
+docs/directory-submission.md                       Connectors Directory submission pack
+scripts/audit-mcp-tools.py                         Tool-annotation audit against directory criteria
 finlistics-claude-plugins/finlistics-ai/
 ├── .claude-plugin/plugin.json                     Plugin manifest
-├── .mcp.json                                      MCP connector config — Claude Code only
-└── skills/finlistics-ai/SKILL.md                  The skill (upload this to claude.ai)
+├── .mcp.json                                      Connector configuration
+└── skills/finlistics-ai/SKILL.md                  The skill
 ```
 
-> **`.claude-plugin/` is a stub for future work.** The `marketplace.json` catalog it contains is a
-> placeholder for distributing this as a Claude Code plugin marketplace later. Nothing in the install
-> steps above depends on it — the connector is added in claude.ai and the skill is uploaded manually.
+---
+
+## Development
+
+Install [pre-commit](https://pre-commit.com) once per clone:
+
+```shell
+pre-commit install          # or: uvx pre-commit install
+```
+
+[`.pre-commit-config.yaml`](.pre-commit-config.yaml) runs JSON and YAML parsing, whitespace and
+line-ending hygiene, `claude plugin validate` on both the marketplace and the plugin, and three
+project-specific checks:
+
+| Hook | Why |
+|---|---|
+| `skill-frontmatter` | `claude plugin validate` exits 0 on a missing frontmatter warning and has no `--strict` flag. Also enforces claude.ai's 200-character `description` ceiling, which the CLI doesn't know about. |
+| `no-spa-mcp-endpoint` | The apex host serves the ClientIQ2 web app and answers `200 text/html` for any path, so an MCP client pointed at it fails silently instead of erroring. |
+| `forbid-ds-store` | macOS metadata was previously committed into `skills/`. |
+
+The same hooks run in CI via [.github/workflows/validate.yml](.github/workflows/validate.yml).
+Run them by hand with `pre-commit run --all-files`; bypass with `git commit --no-verify`.
+
+To test changes without installing:
+
+```shell
+claude --plugin-dir ./finlistics-claude-plugins/finlistics-ai
+```
+
+### Before submitting to the directory
+
+Audit the live server's tool annotations — every tool needs a `title` and the applicable
+`readOnlyHint` or `destructiveHint`, or the submission is rejected:
+
+```shell
+export MCP_TOKEN='<access token with scope mcp:tools>'
+python3 scripts/audit-mcp-tools.py
+```
+
+See [docs/directory-submission.md](docs/directory-submission.md) for the full submission checklist,
+listing copy, and privacy policy draft.
+
+---
+
+## Organization-managed alternative
+
+Team and Enterprise owners who want to push the connector and skill to members directly, rather
+than having each member install the plugin, can distribute through **Organization settings →
+Plugins**. Members still authenticate to ClientIQ2 individually.
+
+The older manual path — adding the connector under **Organization settings → Connectors** and
+uploading `SKILL.md` under **Organization settings → Skills** — still works but is not recommended:
+it requires an Owner, splits the two pieces apart, and has no in-place update. Reinstalling the
+plugin is a single step.
+
+---
 
 ## References
 
-- [Provision and manage skills for your organization](https://support.claude.com/en/articles/13119606-provision-and-manage-skills-for-your-organization)
-- [How to create custom skills](https://support.claude.com/en/articles/12512198-how-to-create-custom-skills)
-- [Get started with custom connectors using remote MCP](https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp)
-- [MCP connectors](https://support.claude.com/en/articles/14503689-mcp-connectors)
+- [Use plugins in Claude](https://support.claude.com/en/articles/13837440-use-plugins-in-claude)
+- [Manage plugins for your organization](https://support.claude.com/en/articles/13837433-manage-plugins-for-your-organization)
+- [Submitting to the Connectors Directory](https://claude.com/docs/connectors/building/submission)
+- [Submitting your plugin](https://claude.com/docs/plugins/submit)
+- [Plugin marketplaces (Claude Code)](https://code.claude.com/docs/en/plugin-marketplaces)

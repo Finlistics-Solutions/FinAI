@@ -1,0 +1,97 @@
+# Enable once per clone:  pre-commit install
+# Run against everything:  pre-commit run --all-files
+# Bypass for a WIP commit:  git commit --no-verify
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-json
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-added-large-files
+      - id: check-executables-have-shebangs
+
+  - repo: local
+    hooks:
+      # `claude plugin validate` exits 0 on warnings and has no --strict flag,
+      # so the two hooks below cover what it lets through.
+      - id: claude-validate-marketplace
+        name: claude plugin validate (marketplace)
+        language: system
+        entry: claude plugin validate
+        args: ["."]
+        pass_filenames: false
+        files: ^\.claude-plugin/marketplace\.json$
+
+      - id: claude-validate-plugin
+        name: claude plugin validate (plugin)
+        language: system
+        entry: claude plugin validate
+        args: ["./finlistics-claude-plugins/finlistics-ai"]
+        pass_filenames: false
+        files: ^finlistics-claude-plugins/
+
+      - id: skill-frontmatter
+        name: skill frontmatter within claude.ai limits
+        language: system
+        files: (^|/)SKILL\.md$
+        entry: |
+          python3 -c "
+          import re, sys
+
+          # claude.ai enforces these on skills; Claude Code does not, so a skill
+          # that works locally can still be rejected on upload.
+          LIMITS = {'name': 64, 'description': 200}
+          bad = 0
+
+          for path in sys.argv[1:]:
+              text = open(path, encoding='utf-8').read()
+              match = re.match(r'---\n(.*?)\n---\n', text, re.S)
+              if not match:
+                  print(f'{path}: no YAML frontmatter; Claude cannot tell when to activate the skill')
+                  bad = 1
+                  continue
+
+              fields = {}
+              for line in match.group(1).splitlines():
+                  key, sep, value = line.partition(':')
+                  if sep:
+                      fields[key.strip()] = value.strip()
+
+              for key, limit in LIMITS.items():
+                  value = fields.get(key, '')
+                  if not value:
+                      print(f'{path}: frontmatter missing {key!r}')
+                      bad = 1
+                  elif len(value) > limit:
+                      print(f'{path}: {key} is {len(value)} chars, claude.ai limit is {limit}')
+                      bad = 1
+
+              if not re.search(r'^#{1,6}\s', text[match.end():], re.M):
+                  print(f'{path}: body has no markdown headings; structure may have been flattened')
+                  bad = 1
+
+          sys.exit(bad)
+          "
+
+      # The apex host serves the ClientIQ2 web app and answers 200 text/html for
+      # any path, so pointing an MCP client at it fails silently. The server is
+      # on api.v2. Bare https://v2.finlistics-vm.com (no /mcp) is a legitimate
+      # app link and stays allowed.
+      - id: no-spa-mcp-endpoint
+        name: MCP endpoint must not be the web app host
+        language: pygrep
+        entry: 'https://v2\.finlistics-vm\.com/mcp'
+        types: [text]
+
+      - id: forbid-ds-store
+        name: .DS_Store must not be committed
+        language: fail
+        entry: macOS metadata should not be committed; it is in .gitignore
+        files: (^|/)\.DS_Store$
