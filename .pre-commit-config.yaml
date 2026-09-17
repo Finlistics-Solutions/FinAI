@@ -1,6 +1,11 @@
-# Enable once per clone:  pre-commit install
+# Enable once per clone:  pre-commit install --install-hooks
 # Run against everything:  pre-commit run --all-files
 # Bypass for a WIP commit:  git commit --no-verify
+
+# Install both local gates. The push hook catches anything that was committed
+# with --no-verify or before the commit hook was installed.
+default_install_hook_types: [pre-commit, pre-push]
+default_stages: [pre-commit, pre-push]
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
