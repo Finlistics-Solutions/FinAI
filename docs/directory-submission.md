@@ -20,14 +20,16 @@ export MCP_TOKEN='<access token with scope mcp:tools>'
 python3 scripts/audit-mcp-tools.py
 ```
 
-Every tool needs `annotations.title` plus the applicable hint. All thirteen `clientiq2_*` tools
-read data, so `readOnlyHint: true` applies to each — that is also what lets Claude call them
-without a per-call confirmation prompt. Longest tool name is 48 characters, within the 64 limit.
+Every tool needs `annotations.title` plus the applicable hint. All sixteen tools (fifteen
+`clientiq2_*` plus `current_date`) read data, so `readOnlyHint: true` applies to each — that is
+also what lets Claude call them without a per-call confirmation prompt. Longest tool name is 49
+characters, within the 64 limit.
 
 | Tool | `title` | `readOnlyHint` |
 |---|---|---|
 | `clientiq2_search_industries` | Search industries | `true` |
 | `clientiq2_company_knowledge` | Get company financial profile | `true` |
+| `clientiq2_company_knowledge_by_guid` | Get company financial profile by ID | `true` |
 | `clientiq2_company_ranking` | Rank companies in an industry | `true` |
 | `clientiq2_industry_profile` | Get industry profile | `true` |
 | `clientiq2_industry_strategic_framework` | Get industry goals and strategies | `true` |
@@ -36,9 +38,11 @@ without a per-call confirmation prompt. Longest tool name is 48 characters, with
 | `clientiq2_industry_metrics_annual_history` | Get industry metric history | `true` |
 | `clientiq2_business_functions` | List business functions | `true` |
 | `clientiq2_business_function_diagnostic_questions` | Get diagnostic questions | `true` |
-| `clientiq2_financial_impact_solutions` | Get financial impact solutions | `true` |
+| `clientiq2_financial_impact_solutions_for_company` | Get solutions for a company | `true` |
+| `clientiq2_financial_impact_solutions_for_industry` | Get solutions for an industry | `true` |
 | `clientiq2_finance_domain_knowledge` | Search ClientIQ2 knowledge base | `true` |
 | `clientiq2_custom_chart` | Render a custom chart | see below |
+| `current_date` | Get current date | `true` |
 
 Set `openWorldHint: true` on all of them — they query ClientIQ2's dataset rather than a
 closed enumeration.
@@ -52,9 +56,13 @@ Two rejection triggers to check while you're in the tool definitions:
 
 - **Descriptions must describe, not instruct.** Anything shaped like "always call this first"
   or "ignore X" is read as a prompt-injection pattern. Behavioural rules belong in `SKILL.md`,
-  which is exactly where they already are.
+  but the server's descriptions carry them too. In the `develop` source on 2026-10-28,
+  `clientiq2_company_knowledge` ("you must") and `clientiq2_company_knowledge_by_guid`
+  ("do not call") match the audit's patterns, and others instruct in ways the patterns miss,
+  such as `clientiq2_financial_impact_solutions_for_company` ("ALWAYS use this tool instead
+  of…"). Rewording them is a server change.
 - **No catch-all tools.** A single tool taking a `method` parameter spanning GET and POST is an
-  automatic rejection. The current thirteen are all purpose-built, so this should be clean.
+  automatic rejection. The current tools are all purpose-built, so this should be clean.
 
 ---
 
@@ -170,7 +178,8 @@ removed during review.
 
 ### Test credentials
 
-Reviewers run a functional test of every tool, so the account must have data behind all thirteen.
+Reviewers run a functional test of every tool, so the account must have data behind every
+`clientiq2_*` tool.
 Prepare:
 
 - Username and password for a populated ClientIQ2 account, with any SSO or MFA steps spelled out
